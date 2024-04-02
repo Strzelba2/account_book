@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>Images/pelna-ksiegowosc.jpg</file>
+        <file>Images/pay-accountant-small-business.jpg</file>
+    </qresource>
+    <qresource prefix="/components">
+        <file>CustomButton.qml</file>
+        <file>CustomTextField.qml</file>
+        <file>PinButton.qml</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>Login.qml</file>
+        <file>LoginAdmin.qml</file>
+        <file>Pin.qml</file>
+        <file>QRCode.qml</file>
+        <file>Totp.qml</file>
+        <file>PopupWindow.qml</file>
+        <file>LoadWindow.qml</file>
+        <file>Company.qml</file>
+    </qresource>
+</RCC>
