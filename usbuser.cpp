@@ -57,7 +57,7 @@ void UsbUser::RemoveDrivePath(const QString &path)
 
 bool UsbUser::nativeEventFilter(const QByteArray &eventType, void *message, qintptr *result)
 {
-    qDebug() << "UsbUser::nativeEventFilter";
+//    qDebug() << "UsbUser::nativeEventFilter";
     MSG* msg = reinterpret_cast<MSG*>(message);
     if (msg->message == WM_DEVICECHANGE) {
         PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)msg->lParam;

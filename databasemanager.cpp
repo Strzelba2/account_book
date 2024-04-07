@@ -231,6 +231,14 @@ void DatabaseManager::handleError(const QSqlDatabase &db)
     }
 }
 
+void DatabaseManager::handleError(const QString &message)
+{
+    qDebug() << "DatabaseManager::handleError";
+    if(!message.isEmpty()){
+        dbError = message;
+    }
+}
+
 bool DatabaseManager::createTables()
 {
     qDebug() << "DatabaseManager::createTables";
@@ -431,7 +439,7 @@ bool DatabaseManager::fetchAllBooks(QList<Book *> &books, int companyId)
         book->setContractor(query.value(2).toString());
         book->setInvoice(query.value(3).toString());
 
-        QDate date = QDate::fromString(query.value(4).toString(), "yyyy-MM-dd"); // Zakładając, że data jest zapisana w formacie ISO
+        QDate date = QDate::fromString(query.value(4).toString(), "yyyy-MM-dd");
         book->setDate(date);
         book->setAmount(query.value(5).toDouble());
         book->setCost(query.value(6).toDouble());
@@ -517,8 +525,36 @@ bool DatabaseManager::grantFullAccessToUser(const QString &username, const QStri
 
 bool DatabaseManager::updateBook(int id, const QString &columnName, const QVariant &value)
 {
+    qDebug() << "DatabaseManager::updateBook";
+
+    if (!bookColumnNames.contains(columnName)) {
+        handleError("column does not exist");
+        return false;
+    }
     QSqlQuery query(m_database);
     query.prepare(QString("UPDATE Book SET %1 = :value WHERE id = :id").arg(columnName));
+    if((columnName == bookColumnNames.at(0) || columnName == bookColumnNames.at(1) ||
+        columnName == bookColumnNames.at(2)) && !value.canConvert<QString>()){
+        handleError(QString("Incorrect %1 value .%1 must be a string").arg(columnName));
+        return false;
+    }
+    else if(columnName == bookColumnNames.at(1) && !value.canConvert<QString>()){
+        handleError("Incorrect Account value .Account must be a string");
+        return false;
+    }
+    else if (columnName == bookColumnNames.at(3) && !validateDate(value.toString())) {
+        handleError("Incorrect date value .The date must have the format yyyy-MM-dd");
+        return false;
+    }
+    else if ((columnName == bookColumnNames.at(4) || columnName == bookColumnNames.at(5) ||
+             columnName == bookColumnNames.at(6)) && !value.canConvert<double>()){
+         handleError(QString("Incorrect %1 value .%1 must be a double").arg(columnName));
+         return false;
+     }
+    else if (columnName == bookColumnNames.at(7)  && !value.canConvert<int>()){
+         handleError(QString("Incorrect %1 value .%1 must be a int").arg(columnName));
+         return false;
+     }
 
     switch (value.typeId()) {
         case QMetaType::QDate:
@@ -537,15 +573,29 @@ bool DatabaseManager::updateBook(int id, const QString &columnName, const QVaria
             qDebug() << "Niezdefiniowany typ dla kolumny";
             return false;
     }
-    query.bindValue(":value", value);
+//    query.bindValue(":value", value);
     query.bindValue(":id", id);
 
     if (!query.exec()) {
         qDebug() << "can not update book:" << query.lastError();
+        handleError(m_database);
         return false;
     }
 
     return true;
+}
+
+bool DatabaseManager::validateDate(const QString &dateString)
+{
+    qDebug() << "DatabaseManager::validateDate";
+    QDate date = QDate::fromString(dateString, "yyyy-MM-dd");
+    if (date.isValid()) {
+        qDebug() << "Date is correct:" ;
+        return true;
+    } else {
+        qDebug() << "Date is not correct";
+        return false;
+    }
 }
 
 

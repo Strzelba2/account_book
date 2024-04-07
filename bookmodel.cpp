@@ -87,7 +87,12 @@ bool BookModel::setData(const QModelIndex &index, const QVariant &value, int rol
                     if (m_dbManager->updateBook(book->id(), columnName, value)){
                         book->setAccount(value.toString());
                         changed = true;
+                    }else{
+                        emit bookDataError(m_dbManager->getLastDatabaseError());
                     }
+                }
+                else{
+                    emit bookDataError("The value is the same as before");
                 }
                 break;
             case ContractorRole:
@@ -96,7 +101,12 @@ bool BookModel::setData(const QModelIndex &index, const QVariant &value, int rol
                     if (m_dbManager->updateBook(book->id(), columnName, value)){
                         book->setContractor(value.toString());
                         changed = true;
+                    }else{
+                        emit bookDataError(m_dbManager->getLastDatabaseError());
                     }
+                }
+                else{
+                    emit bookDataError("The value is the same as before");
                 }
                 break;
             case InvoiceRole:
@@ -105,7 +115,12 @@ bool BookModel::setData(const QModelIndex &index, const QVariant &value, int rol
                     if (m_dbManager->updateBook(book->id(), columnName, value)){
                         book->setInvoice(value.toString());
                         changed = true;
+                    }else{
+                        emit bookDataError(m_dbManager->getLastDatabaseError());
                     }
+                }
+                else{
+                    emit bookDataError("The value is the same as before");
                 }
                 break;
             case DateRole:
@@ -114,43 +129,102 @@ bool BookModel::setData(const QModelIndex &index, const QVariant &value, int rol
                     if (m_dbManager->updateBook(book->id(), columnName, value)){
                         book->setDate(QDate::fromString(value.toString(), "yyyy-MM-dd"));
                         changed = true;
+                    }else{
+                        qDebug() << "BookModel::setData::else";
+                        emit bookDataError(m_dbManager->getLastDatabaseError());
                     }
+                }else{
+                    emit bookDataError("not the correct Date format .Format date should be yyyy-MM-dd,"
+                                       "Or the value is the same as before");
                 }
                 break;
-            case AmountRole:
-                if (book->amount() != value.toDouble()){
-                    QString columnName = "amount";
-                    if (m_dbManager->updateBook(book->id(), columnName, value)){
-                        book->setAmount(value.toDouble());
-                        changed = true;
+            case AmountRole:{
+                    QVariant newValue = value;
+                    QString stringValue = value.toString();
+                    if(stringValue.contains(",")){
+                        stringValue.replace(",", ".");
+                        newValue = QVariant(stringValue);
+                    }
+
+                    if (book->amount() != newValue.toDouble()){
+                        QString columnName = "amount";
+                        if (m_dbManager->updateBook(book->id(), columnName, newValue)){
+                            book->setAmount(newValue.toDouble());
+                            changed = true;
+                        }else{
+                            emit bookDataError(m_dbManager->getLastDatabaseError());
+                        }
+                    }
+                    else{
+                        emit bookDataError("not the correct amount format .Format amount  should be Double,"
+                                           "Or the value is the same as before");
+                    }
+                    break;
+            }
+            case CostRole:{
+                QVariant newValue = value;
+                QString stringValue = value.toString();
+                if(stringValue.contains(",")){
+                    stringValue.replace(",", ".");
+                    newValue = QVariant(stringValue);
+                }
+                if (book->cost() != newValue.toDouble()){
+                    if(book->revenue() == 0 || book->cost()>0){
+                        QString columnName = "cost";
+                        if (m_dbManager->updateBook(book->id(), columnName, newValue)){
+                            book->setCost(newValue.toDouble());
+                            changed = true;
+                        }else{
+                            emit bookDataError(m_dbManager->getLastDatabaseError());
+                        }
+                    }else{
+                        emit bookDataError("revenue value should by equal 0");
                     }
                 }
-                break;
-            case CostRole:
-                if (book->cost() != value.toDouble()){
-                    QString columnName = "cost";
-                    if (m_dbManager->updateBook(book->id(), columnName, value)){
-                        book->setCost(value.toDouble());
-                        changed = true;
-                    }
+                else{
+                    emit bookDataError("not the correct amount format .Format amount  should be Double,"
+                                       "Or the value is the same as before");
                 }
                 break;
-            case RevenueRole:
-                if (book->revenue() != value.toDouble()){
-                    QString columnName = "revenue";
-                    if (m_dbManager->updateBook(book->id(), columnName, value)){
-                        book->setRevenue(value.toDouble());
-                        changed = true;
+            }
+            case RevenueRole:{
+                QVariant newValue = value;
+                QString stringValue = value.toString();
+                if(stringValue.contains(",")){
+                    stringValue.replace(",", ".");
+                    newValue = QVariant(stringValue);
+                }
+                if (book->revenue() != newValue.toDouble()){
+                    if(book->cost() == 0 || book->revenue()>0){
+                        QString columnName = "revenue";
+                        if (m_dbManager->updateBook(book->id(), columnName, newValue)){
+                            book->setRevenue(newValue.toDouble());
+                            changed = true;
+                        }else{
+                            emit bookDataError(m_dbManager->getLastDatabaseError());
+                        }
+                    }else{
+                        emit bookDataError("cost value should by equal 0");
                     }
                 }
+                else{
+                    emit bookDataError("not the correct amount format .Format amount  should be Double,"
+                                       "Or the value is the same as before");
+                }
                 break;
+            }
             case MonthRole:
-                if (book->month() != value.toInt()){
+                if (book->month() != value.toInt() && value.toInt( )!= 0){
                     QString columnName = "month";
                     if (m_dbManager->updateBook(book->id(), columnName, value)){
                         book->setMonth(value.toInt());
                         changed = true;
+                    }else{
+                        emit bookDataError(m_dbManager->getLastDatabaseError());
                     }
+                }else{
+                    emit bookDataError("month must be a singular number,"
+                                       "Or the value is the same as before");
                 }
                 break;
             default: return false;
@@ -440,3 +514,17 @@ void BookModel::sort(int column, Qt::SortOrder order)
         }
     }
 }
+
+bool BookModel::checkIfID(const int& column)
+{
+    qDebug() << "BookModel::checkIfID ";
+    int role = columnToRoleMap.value(column, Qt::UserRole);
+    if (role == IdRole){
+        return true;
+    }else{
+        return false;
+    }
+
+}
+
+

@@ -50,11 +50,13 @@ public:
     void addNewEmptyBook();
     Book* findBookWithHighestId();
     Q_INVOKABLE void sort(int column, Qt::SortOrder order) override;
+    Q_INVOKABLE bool checkIfID (const int& column);
     Q_INVOKABLE void changeColumnWidth(int column);
     Q_INVOKABLE void updateColumnOrder(int oldIndex, int newIndex);
 
 signals:
     void columnWidtChanged(int column);
+    void bookDataError(const QString error);
 
 private:
     QList<Book*> m_books;

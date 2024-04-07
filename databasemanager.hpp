@@ -31,6 +31,7 @@ public:
     int addEmptyBook(int companyId);
     bool grantFullAccessToUser(const QString& username, const QString& databaseName);
     bool updateBook(int id, const QString& columnName, const QVariant& value);
+    bool validateDate(const QString& dateString);
 
 signals:
 
@@ -42,6 +43,8 @@ private:
     QString getHashedPassword(const QString &username);
     void handleError(const QSqlQuery &query);
     void handleError(const QSqlDatabase &db);
+    void handleError(const QString& message);
+    const QStringList bookColumnNames = {"account", "contractor", "invoice", "date","amount","cost", "revenue","month"};
 
     bool createTables();
 

@@ -570,7 +570,9 @@ Window {
                     acceptedButtons: Qt.LeftButton
                     onDoubleClicked: {
                         console.log("companyWindow.tableView.recDell.onDoubleClicked");
-                        editor.showEditor();
+                        if( !tableView.model.checkIfID(model.column)){
+                           editor.showEditor();
+                        }
                     }
                 }
 
@@ -686,6 +688,14 @@ Window {
             stackLayout.currentIndex = buttonIndex;
             lastClickedButtonIndex = buttonIndex;
             companyWindow.offsetBar = bar1.height;
+        }
+    }
+
+    Connections {
+        target: viewService.sessionManager.bookModel
+        function onBookDataError (error) {
+            console.log("viewService.sessionManage.bookModel.onSessionError")
+            loginWindowRef.showPopup(error,false);
         }
     }
 
