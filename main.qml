@@ -41,6 +41,7 @@ Window {
             }else{
                 myLoader.source = "LoginAdmin.qml";
             }
+            loginWindow.restartPopupTimer();
         }
         else
         {
@@ -48,7 +49,7 @@ Window {
         }
         loginWindow.freezeWindow = false;
         loginWindow.popupOpen = false;
-        loginWindow.restartPopupTimer();
+
         popup.destroy();
     }
 
@@ -99,7 +100,7 @@ Window {
         var newSource = "";
         switch (state) {
             case LoginState.LoginAdmin:
-                popupTimer.stop();
+                loginWindow.stopPopupTimer();
                 if(loginWindow.usbConnected)
                 {
                     newSource = "Pin.qml";
@@ -121,7 +122,7 @@ Window {
             case LoginState.Register:
                 if(usbConnected)
                 {
-                    popupTimer.stop();
+                    loginWindow.stopPopupTimer();
                     newSource =  "Pin.qml";
                     break;
                 }
@@ -141,32 +142,32 @@ Window {
                 }
             case LoginState.PIPUSB:
                 newSource = "QRCode.qml";
-                popupTimer.stop();
+                loginWindow.stopPopupTimer();
                 break;
             case LoginState.QRCode:
                 if (myLoader.item.showTotp)
                 {
                     newSource = "Totp.qml";
-                    popupTimer.stop();
+                    loginWindow.stopPopupTimer();
                     break;
                 }
                 else
                 {
                     newSource = "Login.qml";
-                    popupTimer.stop();
+                    loginWindow.stopPopupTimer();
                     break;
                 }
             case LoginState.Login:
                 if (myLoader.item.showTotp)
                 {
                     newSource = "Totp.qml";
-                    popupTimer.stop();
+                    loginWindow.stopPopupTimer();
                     break;
                 }
                 else
                 {
                     newSource = "Login.qml";
-                    popupTimer.stop();
+                    loginWindow.stopPopupTimer();
                     break;
                 }
         }

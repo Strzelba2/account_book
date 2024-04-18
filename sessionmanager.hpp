@@ -5,6 +5,7 @@
 #include "user.hpp"
 #include "databasemanager.hpp"
 #include "bookmodel.hpp"
+#include "subcontractormodel.hpp"
 #include "totpmanager.hpp"
 #include "loginstate.hpp"
 
@@ -17,6 +18,7 @@ class SessionManager : public QObject
     Q_PROPERTY(User* user READ getUser CONSTANT)
     Q_PROPERTY(LoginState* loginState READ getLoginState CONSTANT)
     Q_PROPERTY(BookModel* bookModel READ bookModel WRITE setBookModel NOTIFY bookModelChanged)
+    Q_PROPERTY(SubcontractorModel* subcontractorModel READ getSubcontractorModel CONSTANT)
 
 public:
     explicit SessionManager(DatabaseManager* dbManager,QObject *parent = nullptr);
@@ -46,6 +48,8 @@ public:
     BookModel *bookModel() const;
     void setBookModel(BookModel *newBookModel);
 
+    SubcontractorModel *getSubcontractorModel() const;
+
 signals:
     void loginAdminFinished(bool success);
     void loginUserFinished(bool success);
@@ -63,6 +67,7 @@ private:
     User* m_user;
     DatabaseManager* m_dbManager;
     BookModel* m_bookModel;
+    SubcontractorModel* m_subcontractorModel;
     TOTPManager* m_totpManager;
     LoginState* m_loginState;
 

@@ -6,7 +6,7 @@
 #include <QDebug>
 
 BookModel::BookModel(DatabaseManager *dbManager,QObject *parent)
-    : QAbstractTableModel(parent),m_dbManager(dbManager)
+    : QAbstractTableModel(parent),m_dbManager(dbManager),m_month(0)
 {
     loadColumnOrder();
     for (int i = 0; i < columnToRoleMap.size(); ++i) {
@@ -19,7 +19,12 @@ int BookModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
 //    qDebug() << "BookModel::rowCount";
-    return m_books.count();
+    if(m_month == 0){
+       return m_books.count();
+    }else{
+       return m_filteredBooks.count();
+    }
+
 }
 
 int BookModel::columnCount(const QModelIndex &parent) const
@@ -37,7 +42,12 @@ QVariant BookModel::data(const QModelIndex &index, int role) const
         qDebug() << "ivalid index or row:";
         return QVariant();
     }
-    const Book *book = m_books.at(index.row());
+    const Book *book;
+    if (m_month == 0){
+        book = m_books.at(index.row());
+    }else{
+        book = m_filteredBooks.at(index.row());
+    }
     if (!book){
         qDebug() << "ivalid book:";
         return QVariant();
@@ -59,7 +69,7 @@ QVariant BookModel::data(const QModelIndex &index, int role) const
         case DateRole: return book->date().toString("yyyy-MM-dd");
         case AmountRole: return book->amount();
         case CostRole: return book->cost();
-    case RevenueRole: return book->revenue();
+        case RevenueRole: return book->revenue();
         case MonthRole: return book->month();
         default: return QVariant();
     }
@@ -69,7 +79,13 @@ QVariant BookModel::data(const QModelIndex &index, int role) const
 bool BookModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     qDebug() << "BookModel::setData";
-    Book *book = m_books.at(index.row());
+    Book *book;
+    if (m_month == 0){
+        book = m_books.at(index.row());
+    }else{
+        book = m_filteredBooks.at(index.row());
+    }
+
     if (!book)
         return false;
     bool changed = false;
@@ -420,6 +436,25 @@ void BookModel::updateColumnOrder(int oldIndex, int newIndex)
     }
 }
 
+void BookModel::setMonth(const int& newMonth)
+{
+    qDebug() << "BookModel::setMonth";
+    if (m_month != newMonth){
+        m_month = newMonth;
+        if(m_month != 0){
+            m_filteredBooks.clear();
+
+            for (Book* book : m_books) {
+                if (book->month() == m_month) {
+                    m_filteredBooks.append(book);
+                }
+            }
+        }
+        beginResetModel();
+        endResetModel();
+    }
+}
+
 bool BookModel::loadInitialData()
 {
     qDebug() << "BookModel::loadInitialData " ;
@@ -438,15 +473,20 @@ void BookModel::addNewEmptyBook()
     int newId = m_dbManager->addEmptyBook(m_company_id);
     if (newId == -1) {
         qDebug() << "Error creating a new empty book.";
+        emit bookDataError("Error creating a new empty book.");
         return;
     }
     Book* newBook = new Book(this);
     newBook->setId(newId);
     newBook->setCompanyId(m_company_id);
     newBook->setDate(QDate());
+    newBook->setAmount(0);
+    newBook->setRevenue(0);
+    newBook->setCost(0);
+    newBook->setMonth(0);
 
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    m_books.append(newBook); // Załóżmy, że m_data to lista przechowująca twoje książki
+    m_books.append(newBook);
     endInsertRows();
 }
 
@@ -462,7 +502,6 @@ Book *BookModel::findBookWithHighestId()
             bookWithHighestId = book;
         }
     }
-
     return bookWithHighestId;
 }
 
@@ -503,8 +542,11 @@ void BookModel::sort(int column, Qt::SortOrder order)
                 return false;
         }
     };
-
-    std::sort(m_books.begin(), m_books.end(), comparator);
+    if (m_month == 0){
+        std::sort(m_books.begin(), m_books.end(), comparator);
+    }else{
+        std::sort(m_filteredBooks.begin(), m_filteredBooks.end(), comparator);
+    }
 
     endResetModel();
 
@@ -512,6 +554,15 @@ void BookModel::sort(int column, Qt::SortOrder order)
         if(key != column) {
             columnSortState[key] = SortState::NoSort;
         }
+    }
+}
+
+void BookModel::changeSorte(const int& column)
+{
+    qDebug() << "BookModel::changeSorte " ;
+    SortState currentState = columnSortState.value(column, SortState::NoSort);
+    if (currentState == SortState::Ascending){
+        columnSortState[column] = SortState::Descending;
     }
 }
 
@@ -524,7 +575,6 @@ bool BookModel::checkIfID(const int& column)
     }else{
         return false;
     }
-
 }
 
 

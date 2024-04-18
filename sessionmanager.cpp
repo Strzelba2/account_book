@@ -4,7 +4,8 @@
 
 SessionManager::SessionManager(DatabaseManager *dbManager, QObject *parent)
     : QObject(parent), m_user(new User(this)),m_dbManager(dbManager),
-      m_bookModel(new BookModel(dbManager,this)), m_totpManager(new TOTPManager(this)),m_loginState(new LoginState(this))
+      m_bookModel(new BookModel(dbManager,this)), m_totpManager(new TOTPManager(this)),
+      m_loginState(new LoginState(this)),m_subcontractorModel(new SubcontractorModel(dbManager,this))
 {
     connect(m_totpManager, &TOTPManager::secretChendged, m_user, &User::setKey);
 }
@@ -170,6 +171,10 @@ void SessionManager::verifyTOTP( int userToken)
         if(!m_bookModel->loadInitialData()){
             m_bookModel->addNewEmptyBook();
         }
+        if(!m_subcontractorModel->loadInitialData()){
+            emit sessionError("can not open Database");
+            return;
+        }
         emit loginUserFinished (true);
     }
     else
@@ -288,4 +293,9 @@ void SessionManager::setBookModel(BookModel *newBookModel)
         return;
     m_bookModel = newBookModel;
     emit bookModelChanged();
+}
+
+SubcontractorModel *SessionManager::getSubcontractorModel() const
+{
+    return m_subcontractorModel;
 }

@@ -40,6 +40,8 @@ set(SOURCES
     totpmanager.cpp
     qrcodegen/qrcodegen.cpp
     loginstate.cpp
+    subcontractor.cpp
+    subcontractormodel.cpp
     )
 
 set(HEADERS
@@ -53,6 +55,8 @@ set(HEADERS
     totpmanager.hpp
     qrcodegen/qrcodegen.hpp
     loginstate.hpp
+    subcontractor.hpp
+    subcontractormodel.hpp
     )
 
 qt_add_resources(SOURCES qml.qrc)
@@ -76,6 +80,10 @@ qt_add_qml_module(appROZLICZENIE
     QML_FILES Totp.qml
     QML_FILES PopupWindow.qml
     QML_FILES LoadWindow.qml
+    QML_FILES Subcontractor.qml
+    QML_FILES Book.qml
+    QML_FILES AddBooks.qml
+    QML_FILES SubcontractorList.qml
 )
 
 set_target_properties(appROZLICZENIE PROPERTIES

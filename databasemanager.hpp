@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QtSql>
 #include "book.hpp"
-
+#include "subcontractor.hpp"
 
 class DatabaseManager : public QObject
 {
@@ -26,12 +26,18 @@ public:
     bool validatePassword(const QString& username, const QString& password);
     QVariantMap getUserData(const QString& username);
     QString getSecretKey(const QString &username);
-    bool fetchAllBooks(QList<Book*>& books ,int companyId);
+    bool fetchAllBooks(QList<Book*>& books ,const int& companyId);
+    bool fetchAllSubcontractor(QList<Subcontractor*>& subconstractors);
     int getCompanyIdForUser(const QString& userEmail);
-    int addEmptyBook(int companyId);
+    int addEmptyBook(const int& companyId);
+    int addSubcontractor(const QString &shortname, const QString &name, const QString &nip,
+                          const QString &zip, const QString &city, const QString &street);
     bool grantFullAccessToUser(const QString& username, const QString& databaseName);
-    bool updateBook(int id, const QString& columnName, const QVariant& value);
+    bool updateBook(const int& id, const QString& columnName, const QVariant& value);
+    bool updateSubcontractor(const int& id,const QString& columnName,  const QVariant& value);
+    bool deleteSubcontractor (const int& id);
     bool validateDate(const QString& dateString);
+    bool isNipUnique(const QString &nip);
 
 signals:
 

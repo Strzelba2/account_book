@@ -17,5 +17,10 @@
         <file>PopupWindow.qml</file>
         <file>LoadWindow.qml</file>
         <file>Company.qml</file>
+        <file>Register.qml</file>
+        <file>Subcontractor.qml</file>
+        <file>BOOK.qml</file>
+        <file>AddBooks.qml</file>
+        <file>SubcontractorList.qml</file>
     </qresource>
 </RCC>

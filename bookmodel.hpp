@@ -50,9 +50,11 @@ public:
     void addNewEmptyBook();
     Book* findBookWithHighestId();
     Q_INVOKABLE void sort(int column, Qt::SortOrder order) override;
+    Q_INVOKABLE void changeSorte(const int& column);
     Q_INVOKABLE bool checkIfID (const int& column);
     Q_INVOKABLE void changeColumnWidth(int column);
-    Q_INVOKABLE void updateColumnOrder(int oldIndex, int newIndex);
+    Q_INVOKABLE void updateColumnOrder(int oldIndex, int newIndex);  
+    Q_INVOKABLE void setMonth(const int& newMonth);
 
 signals:
     void columnWidtChanged(int column);
@@ -60,10 +62,12 @@ signals:
 
 private:
     QList<Book*> m_books;
+    QList<Book*> m_filteredBooks;
     QHash<int, int> columnToRoleMap;
     DatabaseManager* m_dbManager;
     QString m_UserEmail;
     int m_company_id;
+    int m_month;
     QMap<int, SortState> columnSortState;
 };
 

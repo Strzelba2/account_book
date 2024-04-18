@@ -38,5 +38,22 @@ TextField {
     selectedTextColor: "grey"
     selectionColor: "grey"
     placeholderTextColor: "grey"
+
+    onTextChanged: {
+        console.log("CustomTextFiel.onTextChanged")
+        calculateFontSize()
+    }
+
+    function calculateFontSize() {
+        const maxTextWidth = textField.implicitWidth - 10;
+        while (textField.contentWidth > maxTextWidth && textField.font.pixelSize > 9) {
+            textField.font.pixelSize -= 1;
+        }
+    }
+
+    Component.onCompleted:{
+        console.log("CustomTextFiel.onCompleted")
+        calculateFontSize()
+    }
 }
 

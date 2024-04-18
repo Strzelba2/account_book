@@ -169,7 +169,7 @@ Item {
     }
 
 
-    Keys.onPressed: {
+    Keys.onPressed: function(event) {
             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 register()
             }
@@ -202,30 +202,6 @@ Item {
             }
         }
     }
-
-//    Component.onCompleted: {
-
-//        loginWindow.customButtonClickedFunction = function(popup,reload) {
-//            console.log("Nadpisana akcja przycisku OK");
-//            loginWindow.changeImageOpacity(1)
-//            if(reload)
-//            {
-//                console.log("reload true")
-//                var shouldReloadRegister = loginWindow.loginState === LoginState.Register;
-//                console.log("shouldReloadRegister" + shouldReloadRegister);
-//                myLoader.source = "";
-//                var newSource = shouldReloadRegister ? "LoadWindow.qml" : "Register.qml";
-//                myLoader.source = newSource;
-//            }
-//            else
-//            {
-//                myLoader.item.freezeComponents(false);
-//            }
-
-//            loginWindow.freezeWindow = false
-//            popup.close();
-//        }
-//    }
 }
 
 

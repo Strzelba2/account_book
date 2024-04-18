@@ -246,7 +246,7 @@ bool DatabaseManager::createTables()
 
     if (!queryCompany.isActive())
     {
-        qDebug() << "table can not be created";
+        qDebug() << "table Company can not be created";
         handleError(m_database);
         return false;
     }
@@ -257,19 +257,34 @@ bool DatabaseManager::createTables()
                                           "encrypted_secret_key VARCHAR(255), "
                                           "email VARCHAR(255) NOT NULL, "
                                           "company_id INTEGER, "
-                                          "FOREIGN KEY (company_id) REFERENCES Company(id), "
+                                          "FOREIGN KEY (company_id) REFERENCES Company(id) ON DELETE CASCADE, "
                                           "is_active BOOLEAN DEFAULT false)");
     if (!queryUser.isActive())
     {
-        qDebug() << "table can not be created";
+        qDebug() << "table Users can not be created";
         handleError(m_database);
         return false;
     }
-
+    QSqlQuery querySubcontractors = m_database.exec("CREATE TABLE IF NOT EXISTS Subcontractors ("
+                                          "id SERIAL PRIMARY KEY, "
+                                          "shortname VARCHAR(255) NOT NULL, "
+                                          "name VARCHAR(255) NOT NULL, "
+                                          "NIP VARCHAR(255), "
+                                          "zip VARCHAR(255) NOT NULL, "
+                                          "city VARCHAR(255) NOT NULL, "
+                                          "street VARCHAR(255) NOT NULL)");
+    if (!querySubcontractors.isActive())
+    {
+        qDebug() << "table Subcontractors can not be created";
+        handleError(m_database);
+        return false;
+    }
     QSqlQuery queryBook = m_database.exec("CREATE TABLE IF NOT EXISTS Book ("
                                           "id SERIAL PRIMARY KEY,"
                                           "company_id INTEGER, "
-                                          "FOREIGN KEY (company_id) REFERENCES Company(id), "
+                                          "FOREIGN KEY (company_id) REFERENCES Company(id) ON DELETE CASCADE, "
+                                          "subcontractors_id INTEGER, "
+                                          "FOREIGN KEY (subcontractors_id) REFERENCES Subcontractors(id) ON DELETE RESTRICT, "
                                           "account VARCHAR(255),"
                                           "contractor VARCHAR(255),"
                                           "invoice VARCHAR(255),"
@@ -277,12 +292,43 @@ bool DatabaseManager::createTables()
                                           "amount DECIMAL(10, 2),"
                                           "cost DECIMAL(10, 2),"
                                           "revenue DECIMAL(10, 2),"
-                                          "month INTEGER"
-                                          ");");
+                                          "month INTEGER)");
 
     if (!queryBook.isActive())
     {
-        qDebug() << "table can not be created" ;
+        qDebug() << "table Book can not be created" ;
+        handleError(m_database);
+        return false;
+    }
+    QSqlQuery queryAssets = m_database.exec("CREATE TABLE IF NOT EXISTS Assets ("
+                                          "id SERIAL PRIMARY KEY,"
+                                          "company_id INTEGER, "
+                                          "FOREIGN KEY (company_id) REFERENCES Company(id) ON DELETE CASCADE, "
+                                          "name VARCHAR(255),"
+                                          "classification VARCHAR(255),"
+                                          "comment VARCHAR(255),"
+                                          "date DATE,"
+                                          "amount DECIMAL(10, 2),"
+                                          "period INTEGER,"
+                                          "monthly_amount DECIMAL(10, 2),"
+                                          "remaining_amount DECIMAL(10, 2))");
+
+    if (!queryAssets.isActive())
+    {
+        qDebug() << "table Book can not be created" ;
+        handleError(m_database);
+        return false;
+    }
+    QSqlQuery queryAssetsToBooks = m_database.exec("CREATE TABLE IF NOT EXISTS AssetsToBooks ("
+                                          "id SERIAL PRIMARY KEY,"
+                                          "assets_id INTEGER, "
+                                          "FOREIGN KEY (assets_id) REFERENCES Assets(id), "
+                                          "book_id INTEGER, "
+                                          "FOREIGN KEY (book_id) REFERENCES Book(id))");
+
+    if (!queryAssetsToBooks.isActive())
+    {
+        qDebug() << "table AssetsToBooks can not be created" ;
         handleError(m_database);
         return false;
     }
@@ -420,7 +466,7 @@ QString DatabaseManager::getSecretKey(const QString &username)
     return QString();
 }
 
-bool DatabaseManager::fetchAllBooks(QList<Book *> &books, int companyId)
+bool DatabaseManager::fetchAllBooks(QList<Book *> &books, const int& companyId)
 {
     qDebug() << "DatabaseManager::fetchAllBooks";
     QSqlQuery query(m_database);
@@ -446,12 +492,38 @@ bool DatabaseManager::fetchAllBooks(QList<Book *> &books, int companyId)
         book->setRevenue(query.value(7).toDouble());
         book->setMonth(query.value(8).toInt());
 
-
         books.append(book);
     }
 
     return !books.isEmpty();
 
+}
+
+bool DatabaseManager::fetchAllSubcontractor(QList<Subcontractor*> &subconstractors)
+{
+    qDebug() << "DatabaseManager::fetchAllSubcontractor";
+    QSqlQuery query(m_database);
+    query.prepare("SELECT * FROM Subcontractors");
+
+    if (!query.exec()) {
+        handleError(query);
+        return false;
+    }
+
+    while (query.next()) {
+        Subcontractor* subcontractor = new Subcontractor(this);
+        subcontractor->setId(query.value(0).toInt());
+        subcontractor->setShortname(query.value(1).toString());
+        subcontractor->setName(query.value(2).toString());
+        subcontractor->setNip(query.value(3).toString());
+        subcontractor->setZip(query.value(4).toString());
+        subcontractor->setCity(query.value(5).toString());
+        subcontractor->setStreet(query.value(6).toString());
+
+        subconstractors.append(subcontractor);
+    }
+
+    return true;
 }
 
 int DatabaseManager::getCompanyIdForUser(const QString &userEmail)
@@ -474,7 +546,7 @@ int DatabaseManager::getCompanyIdForUser(const QString &userEmail)
     }
 }
 
-int DatabaseManager::addEmptyBook(int companyId)
+int DatabaseManager::addEmptyBook(const int& companyId)
 {
     qDebug() << "DatabaseManager::addEmptyBook";
     QSqlQuery query(m_database);
@@ -492,6 +564,30 @@ int DatabaseManager::addEmptyBook(int companyId)
         return query.value(0).toInt();
     }
 
+    return -1;
+}
+
+int DatabaseManager::addSubcontractor(const QString &shortname, const QString &name, const QString &nip,
+                                       const QString &zip, const QString &city, const QString &street)
+{
+    QSqlQuery query(m_database);
+    query.prepare("INSERT INTO Subcontractors (shortname, name, nip, zip, city, street) VALUES (:shortname, :name, :nip, :zip, :city, :street) RETURNING id;");
+    query.bindValue(":shortname", shortname);
+    query.bindValue(":name", name);
+    query.bindValue(":nip", nip);
+    query.bindValue(":zip", zip);
+    query.bindValue(":city", city);
+    query.bindValue(":street", street);
+
+    if (!query.exec()) {
+        handleError(query);
+        qDebug() << "Error adding new Subcontractors:" << query.lastError().text();
+        return -1;
+    }
+    if (query.next()) {
+        qDebug() << "next";
+        return query.value(0).toInt();
+    }
     return -1;
 }
 
@@ -520,10 +616,18 @@ bool DatabaseManager::grantFullAccessToUser(const QString &username, const QStri
         handleError(m_database);
         return false;
     }
+
+    QString getAccessSubcontractorId = QString("GRANT USAGE, SELECT, UPDATE ON SEQUENCE subcontractors_id_seq TO  %1 ").arg(username);
+    QSqlQuery queryGetAccessSubcontractorId = m_database.exec(getAccessSubcontractorId);
+    if(!queryGetAccessSubcontractorId.isActive())
+    {
+        handleError(m_database);
+        return false;
+    }
     return true;
 }
 
-bool DatabaseManager::updateBook(int id, const QString &columnName, const QVariant &value)
+bool DatabaseManager::updateBook(const int& id, const QString &columnName, const QVariant &value)
 {
     qDebug() << "DatabaseManager::updateBook";
 
@@ -573,15 +677,42 @@ bool DatabaseManager::updateBook(int id, const QString &columnName, const QVaria
             qDebug() << "Niezdefiniowany typ dla kolumny";
             return false;
     }
-//    query.bindValue(":value", value);
     query.bindValue(":id", id);
 
     if (!query.exec()) {
         qDebug() << "can not update book:" << query.lastError();
-        handleError(m_database);
+        handleError(query);
         return false;
     }
 
+    return true;
+}
+
+bool DatabaseManager::updateSubcontractor(const int &id,const QString& columnName,  const QVariant &value)
+{
+    QSqlQuery query(m_database);
+    query.prepare(QString("UPDATE Subcontractors SET %1 = :value WHERE id = :id").arg(columnName));
+    query.bindValue(":value", value.toString());
+    query.bindValue(":id", id);
+
+    if (!query.exec()) {
+        qDebug() << "can not update Subcontractor:" << query.lastError();
+        handleError(query);
+        return false;
+    }
+    return true;
+}
+
+bool DatabaseManager::deleteSubcontractor(const int &id)
+{
+    QSqlQuery query(m_database);
+    query.prepare("DELETE FROM Subcontractors WHERE id = :id");
+    query.bindValue(":id", id);
+    if (!query.exec()) {
+        qDebug() << "Error deleting subcontractor from database:" << query.lastError().text();
+        handleError(query);
+        return false;
+    }
     return true;
 }
 
@@ -596,6 +727,23 @@ bool DatabaseManager::validateDate(const QString &dateString)
         qDebug() << "Date is not correct";
         return false;
     }
+}
+
+bool DatabaseManager::isNipUnique(const QString &nip)
+{
+    qDebug() << "DatabaseManager::isNipUnique";
+    QSqlQuery query(m_database);
+
+    query.prepare("SELECT COUNT(*) FROM Subcontractors WHERE nip = :nip");
+    query.bindValue(":nip", nip);
+    if (!query.exec()) {
+        handleError(query);
+        return false;
+    }
+    if (query.next()) {
+        return query.value(0).toInt() == 0;
+    }
+    return false;
 }
 
 
