@@ -4,7 +4,11 @@ import QtQuick.Window 2.15
 import QtQuick.Layouts 1.12
 import "qrc:/components"
 
+import com.mycompany.bookmodel 1.0
+
 Item {
+    signal editFocusLoader()
+    signal changePopupPolice()
     Rectangle {
         id: addBookItem
         anchors.top: parent.top
@@ -42,16 +46,21 @@ Item {
                     }
                     onWidthChanged: {
                         console.log("companyWindow.tableView.horizontalHeader.onWidthChanged");
-                        if(headerText.width + offsetCell >columnWidths.get(model.column).width){
-                            columnWidths.set(model.column, {"width": headerText.width + offsetCell});
-                            tableView.model.changeColumnWidth(model.column);
+                        let columNumber = model.column;
+
+                        if(headerText.width + offsetCell >columnWidths.get(columNumber).width){
+                            columnWidths.set(columNumber, {"width": headerText.width + offsetCell});
+                            tableView.model.changeColumnWidth(columNumber);
                         }
                     }
                     Component.onCompleted: {
-                        console.log("companyWindow.tableView.horizontalHeader.onCompleted");
-                        let currentWidth = headerWidths.get(model.column) ? headerWidths.get(model.column).width : 0;
+                        console.log("AddBooks.tableView.horizontalHeader.onCompleted");
+                        let columNumber = model.column;
+                        let currentWidth = headerWidths.get(columNumber) ? headerWidths.get(columNumber).width : 0;
+
                         if (headerText.width >currentWidth){
-                            headerWidths.set(model.column, {"width": headerText.width + offsetCell});
+                            console.log("columNumber:",columNumber)
+                            headerWidths.set(columNumber, {"width": headerText.width + offsetCell});
                         }
                     }
                 }
@@ -70,7 +79,6 @@ Item {
             anchors.left: parent.left
             syncView: tableView
             clip: true
-
         }
 
         TableView {
@@ -87,6 +95,28 @@ Item {
             ScrollBar.vertical: ScrollBar{}
             model: viewService.sessionManager.bookModel
             property int defaultWidth: 30
+            property bool comboActive: false
+
+            Rectangle {
+                id: tableRec
+                width: addBookItem.width - 30
+                height: addBookItem.height - 30
+                anchors.left: verticalHeader.right
+                anchors.top: horizontalHeader.bottom
+                anchors.topMargin: 5
+                anchors.leftMargin: 5
+                color: "transparent"
+
+                MouseArea {
+                    id: mouseTableView
+                    anchors.fill: parent
+                    enabled: tableView.comboActive
+                    onClicked: {
+                        console.log("mouseTableView.onClicked")
+                        editFocusLoader()
+                    }
+                }
+            }
 
             columnWidthProvider: function(column)
             {
@@ -96,7 +126,6 @@ Item {
             }
 
             delegate: Rectangle {
-
                 id: recDell
                 implicitWidth: tableView.defaultWidth
                 implicitHeight: 50
@@ -104,6 +133,8 @@ Item {
                 radius: 10
                 color : "gray"
                 border.color: "cyan"
+                property int columnDelegate: -1
+                property int rowDelegate: -1
 
                 Text {
                     id: textItem
@@ -115,6 +146,192 @@ Item {
                     visible: !editor.visible
                     Component.onCompleted: {
                         console.log("companyWindow.tableView.recDell.textItem.onCompleted");
+                    }
+                }
+
+                Loader {
+                        id: editorLoader
+                        anchors.fill: parent
+                        active: model.roleName=== BookModel.ContractorRole
+                        sourceComponent:  comboBoxComponent
+
+                        property bool visibleEditor: false
+                        property bool focusLoader: false
+
+                    }
+
+                Component {
+                    id: comboBoxComponent
+
+                    ComboBox {
+                        id: subcontractorCombo
+                        height: 50
+                        width: editorLoader.width
+                        model: viewService.sessionManager.subcontractorModel
+                        textRole: "shortName"
+                        visible: editorLoader.visibleEditor
+                        currentIndex: -1
+                        focus: editorLoader.focusLoader
+
+                        Connections {
+                            target: tableView.parent.parent
+
+                            function onEditFocusLoader() {
+                                console.log("editorLoader.onEditFocusLoader")
+                                hideCombo();
+                            }
+                            function onChangePopupPolice(){
+                                console.log("editorLoader.onChangePopupPolice")
+                                unlockPopupClose()
+                            }
+                        }
+
+                        property bool isPopupOpened: false
+
+                        delegate: ItemDelegate {
+                            width: subcontractorCombo.width -10
+                            text: model.shortName
+                            highlighted: subcontractorCombo.highlightedIndex === index
+                        }
+
+                        contentItem: Text {
+                            text: subcontractorCombo.displayText
+                            font: subcontractorCombo.font
+                            color: subcontractorCombo.pressed ? "#17a81a" : "#21be2b"
+                        }
+
+                        popup: Popup {
+                            id: subcontractorPopup
+                            width: subcontractorCombo.width
+                            closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                            onClosed:{
+                                console.log("subcontractorPopup.onClosed")
+                                subcontractorCombo.isPopupOpened = false
+                                subcontractorCombo.hideCombo()
+                            }
+
+                            onOpened:{
+                                console.log("subcontractorPopup.onOponed")
+                                subcontractorCombo.isPopupOpened = true
+                            }
+                            Column {
+                                width: subcontractorCombo.width -10
+
+                                ListView {
+                                    id: subcontractorlistView
+                                    width: subcontractorCombo.width - 10
+                                    model: subcontractorCombo.model
+                                    clip: true
+                                    implicitHeight: contentHeight
+
+                                    delegate: ItemDelegate {
+                                        width: subcontractorCombo.width
+                                        text: model.shortName
+                                        background: Rectangle {
+                                            color: {
+                                                subcontractorlistView.currentIndex === index ? "#e7e7e7" : "white"
+                                            }
+                                        }
+                                        onClicked: {
+                                            subcontractorCombo.currentIndex = index
+                                            subcontractorCombo.displayText = model.shortName
+                                        }
+                                    }
+                                }
+
+                                CustomButton {
+                                    id: btnAddSubcontractor
+                                    width: 120
+                                    height: 30
+                                    opacity: 1
+                                    text: "Add"
+                                    colorPressed: "#d9d7d4"
+                                    font.family: "Segoe UI"
+                                    colorMouseOver: "#bfbdbb"
+                                    colorDefault: "#b3b2b1"
+                                    font.pointSize: 16
+                                    onClicked: {
+                                        console.log("Added subcontractor")
+                                        var component = Qt.createComponent("qrc:/SubcontractorWindow.qml");
+                                        if (component.status === Component.Ready) {
+                                            var subcontractorWindow = component.createObject(companyWindow);
+
+                                            companyWindow.isSubcontractorWindow = true;
+                                            companyWindow.subcontractorWindow = subcontractorWindow;
+
+                                            companyLoader.item.freezeComponents(true)
+                                            subcontractorCombo.lockPopupClose();
+                                            companyWindow.subcontractorWindow.show();
+                                            companyWindow.subcontractorWindow.changeCompany()
+
+                                        } else {
+                                            console.error("Cannot load Company.qml file:", component.errorString());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        onVisibleChanged: {
+                            console.log("onVisibleChanged.subcontractorCombo")
+                            if (visible) {
+                                editorLoader.focusLoader = true
+                                editorLoader.z =1
+                                subcontractorCombo.z = 2;
+                                let newIndex = find(textItem.text,Qt.MatchContains)
+                                subcontractorlistView.currentIndex = newIndex
+
+                            }else{
+                                editorLoader.z = 0
+                                subcontractorCombo.z = 0;
+                                subcontractorlistView.currentIndex = -1;
+                            }
+                        }
+                        onCurrentIndexChanged: {
+
+                            if (currentIndex !== -1 ) {
+                                let subcontractorId = model.get(currentIndex).id;
+                                visible = false
+                                tableView.model.setData(tableView.model.index(recDell.rowDelegate, recDell.columnDelegate), subcontractorId, Qt.EditRole);
+                                recDell.checkWidth();
+                            }
+                        }
+                        onAccepted: {
+                            console.log("onAccepted")
+                        }
+
+                        onFocusChanged: {
+                            console.log("subcontractorCombo.onFocusChanged")
+
+                            if (!focus && subcontractorCombo.isPopupOpened) {
+                                hideCombo();
+                            }
+                        }
+                        Keys.onReturnPressed: {
+                            console.log("subcontractorCombo.Keys.onReturnPressed")
+                            subcontractorCombo.popup.close();
+                            hideCombo()
+                        }
+                        Component.onCompleted: {
+                            console.log("subcontractorCombo.onCompleted")
+
+                        }
+                        function hideCombo(){
+                            console.log("subcontractorCombo.hideCombo")
+                            editorLoader.visibleEditor = false;
+                            editorLoader.focusLoader = false;
+                            tableView.comboActive = false;
+                        }
+
+                        function lockPopupClose() {
+                            console.log("subcontractorCombo.lockPopupClose")
+                            subcontractorPopup.closePolicy = Popup.NoAutoClose;
+                        }
+
+                        function unlockPopupClose() {
+                            console.log("subcontractorCombo.unlockPopupClose")
+                            subcontractorPopup.closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
+                        }
                     }
                 }
 
@@ -135,22 +352,10 @@ Item {
                         model.edit = text
                         let column = model.column;
                         console.log("onEditingFinished");
-                        if (textItem.implicitWidth + 30 > textItem.width ){
-                            console.log("change column");
-                            columnWidths.set(column, {"width": textItem.implicitWidth + 30});
-                            recDell.implicitWidth = columnWidths.get(model.column).width;
-                            Qt.callLater(tableView.model.layoutChanged);
-                        }
-
-                        if(headerWidths.get(column).width > textItem.implicitWidth + 30 ){
-                            console.log("change header");
-                            columnWidths.set(column, {"width": textItem.implicitWidth + 30});
-
-                            recDell.implicitWidth = columnWidths.get(model.column).width;
-                            Qt.callLater(tableView.model.layoutChanged);
-                        }
+                        recDell.checkWidth();
                         isProcessing = false;
                     }
+
                     function showEditor() {
                         console.log("companyWindow.tableView.recDell.editor.showEditor");
                         if (!visible) {
@@ -172,8 +377,19 @@ Item {
                     acceptedButtons: Qt.LeftButton
                     onDoubleClicked: {
                         console.log("companyWindow.tableView.recDell.onDoubleClicked");
-                        if( !tableView.model.checkIfID(model.column)){
-                           editor.showEditor();
+
+                        recDell.columnDelegate = model.column
+                        if( !tableView.model.checkIfID(recDell.columnDelegate)){
+                            if(model.roleName=== BookModel.ContractorRole){
+                                editorLoader.visibleEditor = true;
+                                editorLoader.width = columnWidths.get(recDell.columnDelegate).width
+
+                                recDell.rowDelegate = model.row;
+                                tableView.comboActive = true
+
+                            }else{
+                                editor.showEditor();
+                            }
                         }
                     }
                 }
@@ -221,6 +437,25 @@ Item {
                     }
                     recDell.implicitWidth = columnWidths.get(column).width;
                 }
+
+                function checkWidth()
+                {
+                    console.log("recDell.checkWidth")
+                    if (textItem.implicitWidth + offsetCell > textItem.width ){
+                        console.log("change column");
+                        columnWidths.set(column, {"width": textItem.implicitWidth + offsetCell});
+                        recDell.implicitWidth = columnWidths.get(model.column).width;
+                        Qt.callLater(tableView.model.layoutChanged);
+                    }
+
+                    if(headerWidths.get(column).width > textItem.implicitWidth + offsetCell ){
+                        console.log("change header");
+                        columnWidths.set(column, {"width": textItem.implicitWidth + offsetCell});
+
+                        recDell.implicitWidth = columnWidths.get(model.column).width;
+                        Qt.callLater(tableView.model.layoutChanged);
+                    }
+                }
             }
 
             function requestForceLayout()
@@ -229,7 +464,9 @@ Item {
                 tableView.forceLayout();
             }
         }
-     }
+
+
+    }
     function freezeComponents(freeze)  {
         console.log("addBookItem.freezeComponents!" + !freeze)
         addBookItem.enabled = !freeze;

@@ -98,7 +98,7 @@ Item {
                         }
                     }
                     Component.onCompleted: {
-                        console.log("companyWindow.tableView.horizontalHeader.onCompleted");
+                        console.log("BOOK.tableView.horizontalHeader.onCompleted");
                         let currentWidth = headerWidths.get(model.column) ? headerWidths.get(model.column).width : 0;
                         if (headerText.width >currentWidth){
                             headerWidths.set(model.column, {"width": headerText.width + offsetCell});

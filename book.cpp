@@ -166,3 +166,16 @@ void Book::setCompanyId(int newCompanyId)
     m_companyId = newCompanyId;
     emit CompanyIdBookChanged();
 }
+
+int Book::subcontractorId() const
+{
+    return m_subcontractorId;
+}
+
+void Book::setSubcontractorId(int newSubcontractorId)
+{
+    if (m_subcontractorId == newSubcontractorId)
+        return;
+    m_subcontractorId = newSubcontractorId;
+    emit SubcontractorIdBookChanged();
+}

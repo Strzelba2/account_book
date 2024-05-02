@@ -27,13 +27,16 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     QHash<int, QByteArray> roleNames() const override;
     bool loadInitialData();
+    QString getSubcontractorShortNameById(const int& id) const;
     Q_INVOKABLE void addSubcontractor(const QString &shortname, const QString &name, const QString &nip,
                           const QString &zip, const QString &city, const QString &street);
     Q_INVOKABLE void removeSubcontractor(const int& index);
+    Q_INVOKABLE QVariantMap get(const int& index) const;
 
 signals:
     void subcontractorDataError(const QString error);
     void subcontractorDataChanged();
+    void subcontractorCloseWindow();
 
 private:
     QList<Subcontractor*> m_subcontractor;

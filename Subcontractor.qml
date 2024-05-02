@@ -1,5 +1,7 @@
-import QtQuick
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
+import QtQuick.Layouts 1.12
 import "qrc:/components"
 
 Item {
@@ -7,12 +9,13 @@ Item {
     property bool company: true
     Rectangle {
         anchors.top: parent.top
-        anchors.topMargin:company ? companyWindow.barTopMargin + companyWindow.barHeight + companyWindow.offsetBar : 20
+        anchors.topMargin:company ? companyWindow.barTopMargin + companyWindow.barHeight + companyWindow.offsetBar : 70
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width - 20
-        height: parent.height - 20 - 2*bar.height
+        height: company ? parent.height - 20 - 2*bar.height : parent.height - 80
         color : "#DFDCDC"
         Rectangle{
+            id: subcontractorRec
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             width: btnCreate.width + 60
@@ -149,10 +152,10 @@ Item {
     }
 
     Keys.onPressed: function(event) {
-            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                createSubcontractor()
-            }
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            createSubcontractor()
         }
+    }
 }
 
 

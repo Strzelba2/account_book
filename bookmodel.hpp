@@ -5,23 +5,11 @@
 #include <QAbstractTableModel>
 #include "book.hpp"
 #include "databasemanager.hpp"
+#include "subcontractormodel.hpp"
 
 class BookModel : public QAbstractTableModel
 {
     Q_OBJECT
-
-    enum KsiegaRoles {
-        IdRole = Qt::UserRole + 1,
-        Column,
-        AccountRole,
-        ContractorRole,
-        InvoiceRole,
-        DateRole,
-        AmountRole,
-        MonthRole,
-        CostRole,
-        RevenueRole
-    };
 
     enum  SortState {
         Ascending = 0,
@@ -32,6 +20,22 @@ class BookModel : public QAbstractTableModel
 public:
     explicit BookModel(DatabaseManager* dbManager,QObject *parent = nullptr);
 
+    enum KsiegaRoles {
+        IdRole = Qt::UserRole + 1,
+        Column,
+        Row,
+        AccountRole,
+        ContractorRole,
+        InvoiceRole,
+        DateRole,
+        AmountRole,
+        MonthRole,
+        CostRole,
+        RevenueRole,
+        RoleNameRole
+    };
+
+    Q_ENUM(KsiegaRoles)
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -48,6 +52,7 @@ public:
     void setUserEmail(const QString& userEmail);
     bool loadInitialData();
     void addNewEmptyBook();
+    void setSubcontractorModel(SubcontractorModel* subcontractorModel);
     Book* findBookWithHighestId();
     Q_INVOKABLE void sort(int column, Qt::SortOrder order) override;
     Q_INVOKABLE void changeSorte(const int& column);
@@ -65,6 +70,7 @@ private:
     QList<Book*> m_filteredBooks;
     QHash<int, int> columnToRoleMap;
     DatabaseManager* m_dbManager;
+    SubcontractorModel* m_subcontractorModel;
     QString m_UserEmail;
     int m_company_id;
     int m_month;

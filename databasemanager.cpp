@@ -119,7 +119,7 @@ bool DatabaseManager::CreateUserDb(const QString &username, const QString &passw
             QSqlQuery queryAccess = m_database.exec(createAccess);
             if (!queryAccess.isActive())
             {
-                qDebug() << "DataBase was not crated succefully."<< m_database.lastError().text();
+                qDebug() << "DataBase was not created succefully."<< m_database.lastError().text();
                 handleError(m_database);
                 m_database.close();
                 return false;
@@ -470,7 +470,7 @@ bool DatabaseManager::fetchAllBooks(QList<Book *> &books, const int& companyId)
 {
     qDebug() << "DatabaseManager::fetchAllBooks";
     QSqlQuery query(m_database);
-    query.prepare("SELECT id, account, contractor, invoice, date, amount, cost, revenue, month FROM Book WHERE company_id = :companyId");
+    query.prepare("SELECT id, account, subcontractors_id, contractor, invoice, date, amount, cost, revenue, month FROM Book WHERE company_id = :companyId");
     query.bindValue(":companyId", companyId);
 
     if (!query.exec()) {
@@ -482,15 +482,16 @@ bool DatabaseManager::fetchAllBooks(QList<Book *> &books, const int& companyId)
         Book* book = new Book(this);
         book->setId(query.value(0).toInt());
         book->setAccount(query.value(1).toString());
-        book->setContractor(query.value(2).toString());
-        book->setInvoice(query.value(3).toString());
+        book->setSubcontractorId(query.value(2).toInt());
+        book->setContractor(query.value(3).toString());
+        book->setInvoice(query.value(4).toString());
 
-        QDate date = QDate::fromString(query.value(4).toString(), "yyyy-MM-dd");
+        QDate date = QDate::fromString(query.value(5).toString(), "yyyy-MM-dd");
         book->setDate(date);
-        book->setAmount(query.value(5).toDouble());
-        book->setCost(query.value(6).toDouble());
-        book->setRevenue(query.value(7).toDouble());
-        book->setMonth(query.value(8).toInt());
+        book->setAmount(query.value(6).toDouble());
+        book->setCost(query.value(7).toDouble());
+        book->setRevenue(query.value(8).toDouble());
+        book->setMonth(query.value(9).toInt());
 
         books.append(book);
     }
@@ -550,7 +551,7 @@ int DatabaseManager::addEmptyBook(const int& companyId)
 {
     qDebug() << "DatabaseManager::addEmptyBook";
     QSqlQuery query(m_database);
-    query.prepare("INSERT INTO Book (company_id, account, contractor, invoice, date, amount, cost, revenue, month) VALUES (:company_id, '', '', '', NULL, 0, 0, 0, 0) RETURNING id;");
+    query.prepare("INSERT INTO Book (company_id, account, contractor, subcontractors_id, invoice, date, amount, cost, revenue, month) VALUES (:company_id, '', '', NULL, '', NULL, 0, 0, 0, 0) RETURNING id;");
     query.bindValue(":company_id", companyId);
 
     if (!query.exec()) {
@@ -631,7 +632,8 @@ bool DatabaseManager::updateBook(const int& id, const QString &columnName, const
 {
     qDebug() << "DatabaseManager::updateBook";
 
-    if (!bookColumnNames.contains(columnName)) {
+
+    if (!bookColumnNames.contains(columnName) && columnName != "subcontractors_id" ) {
         handleError("column does not exist");
         return false;
     }
@@ -651,14 +653,14 @@ bool DatabaseManager::updateBook(const int& id, const QString &columnName, const
         return false;
     }
     else if ((columnName == bookColumnNames.at(4) || columnName == bookColumnNames.at(5) ||
-             columnName == bookColumnNames.at(6)) && !value.canConvert<double>()){
-         handleError(QString("Incorrect %1 value .%1 must be a double").arg(columnName));
-         return false;
-     }
-    else if (columnName == bookColumnNames.at(7)  && !value.canConvert<int>()){
-         handleError(QString("Incorrect %1 value .%1 must be a int").arg(columnName));
-         return false;
-     }
+            columnName == bookColumnNames.at(6)) && !value.canConvert<double>()){
+        handleError(QString("Incorrect %1 value .%1 must be a double").arg(columnName));
+        return false;
+    }
+    else if ((columnName == bookColumnNames.at(7) || columnName == "subcontractors_id")  && !value.canConvert<int>()){
+        handleError(QString("Incorrect %1 value .%1 must be a int").arg(columnName));
+        return false;
+    }
 
     switch (value.typeId()) {
         case QMetaType::QDate:

@@ -18,6 +18,7 @@ class Book : public QObject
     Q_PROPERTY(double revenue READ revenue WRITE setRevenue NOTIFY RevenueBookChanged)
     Q_PROPERTY(int month READ month WRITE setMonth NOTIFY MonthBookChanged)
     Q_PROPERTY(int companyId READ companyId WRITE setCompanyId NOTIFY CompanyIdBookChanged)
+    Q_PROPERTY(int subcontractorId READ subcontractorId WRITE setSubcontractorId NOTIFY SubcontractorIdBookChanged)
 
     int m_id;
 
@@ -30,6 +31,7 @@ class Book : public QObject
     double m_cost;
     double m_revenue;
     int m_companyId;
+    int m_subcontractorId;
 
 public:
     explicit Book(QObject *parent = nullptr);
@@ -66,6 +68,9 @@ public:
     int companyId() const;
     void setCompanyId(int newCompanyId);
 
+    int subcontractorId() const;
+    void setSubcontractorId(int newSubcontractorId);
+
 signals:
 
     void idBookChanged();
@@ -78,6 +83,7 @@ signals:
     void CostBookChanged();
     void RevenueBookChanged();
     void CompanyIdBookChanged();
+    void SubcontractorIdBookChanged();
 };
 
 #endif // BOOK_HPP

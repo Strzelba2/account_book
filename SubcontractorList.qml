@@ -1,9 +1,11 @@
-import QtQuick
-import QtQuick.Controls 2.3
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Window 2.15
+import QtQuick.Layouts 1.12
 import "qrc:/components"
 
 Item {
-    id:subcontractor
+    id:subcontractorList
     property bool company: true
     Row {
         id: headerSubcontractor
@@ -46,97 +48,100 @@ Item {
         color : "#DFDCDC"
 
         ListView {
-               anchors.fill: parent
-               model: viewService.sessionManager.subcontractorModel
-               ScrollBar.horizontal: ScrollBar{}
-               ScrollBar.vertical: ScrollBar{}
-               delegate: Rectangle {
-                   height: 50
-                   radius: 10
-                   color : "gray"
-                   border.color: "cyan"
-                   width: parent.width
-                   Row{
-                       id: rowSubcontractor
-                       spacing: 1
-                       anchors.top: parent.top
-                       anchors.topMargin: 1
-                       anchors.left: parent.left
+            anchors.fill: parent
+            model: viewService.sessionManager.subcontractorModel
+            ScrollBar.horizontal: ScrollBar{}
+            ScrollBar.vertical: ScrollBar{}
+            delegate: Rectangle {
+                height: 50
+                radius: 10
+                color : "gray"
+                border.color: "cyan"
+                width: parent.width
+                Row{
+                    id: rowSubcontractor
+                    spacing: 1
+                    anchors.top: parent.top
+                    anchors.topMargin: 1
+                    anchors.left: parent.left
 
-                       CustomTextField {
-                           id:subcontractorId
-                           text : id
-                           implicitWidth: 70
-                           readOnly: true
-                       }
-                       CustomTextField {
-                           id:subcontractorShortName
-                           text : shortName
-                           implicitWidth: 220
-                           onEditingFinished: {
-                               model.shortName = text
-                           }
-                       }
-                       CustomTextField {
-                           id:subcontractorName
-                           text : name
-                           implicitWidth: 337
-                           onEditingFinished: {
-                               model.name = text
-                           }
-                       }
-                       CustomTextField {
-                           id:subcontractorNIP
-                           text : nip
-                           implicitWidth: 157
-                           onEditingFinished: {
-                               model.nip = text
-                           }
-                       }
-                       CustomTextField {
-                           id:subcontractorZIP
-                           text : zip
-                           implicitWidth: 137
-                           onEditingFinished: {
-                               model.zip = text
-                           }
-                       }
-                       CustomTextField {
-                           id:subcontractorCity
-                           text : city
-                           implicitWidth: 207
-                           onEditingFinished: {
-                               model.city = text
-                           }
-                       }
-                       CustomTextField {
-                           id:subcontractorStreet
-                           text : street
-                           implicitWidth: 292
-                           onEditingFinished: {
-                               model.street = text
-                           }
-                       }
-                       CustomButton {
-                           id:removeSubcontractor
-                           text: "Delete"
-                           width: 88
-                           height: 50
-                           font.pointSize: 13
-                           font.family: "arial"
-                           colorPressed: "#d9d7d4"
-                           colorMouseOver: "#bfbdbb"
-                           colorDefault: "#b3b2b1"
-                           visible: true
-                           clip: false
-                           onClicked: viewService.sessionManager.subcontractorModel.removeSubcontractor(index)
-                       }
-                   }
+                    CustomTextField {
+                        id:subcontractorId
+                        text : id
+                        implicitWidth: 70
+                        readOnly: true
+                    }
+                    CustomTextField {
+                        id:subcontractorShortName
+                        text : shortName
+                        implicitWidth: 220
+                        onEditingFinished: {
+                            model.shortName = text
+                        }
+                    }
+                    CustomTextField {
+                        id:subcontractorName
+                        text : name
+                        implicitWidth: 337
+                        onEditingFinished: {
+                            model.name = text
+                        }
+                    }
+                    CustomTextField {
+                        id:subcontractorNIP
+                        text : nip
+                        implicitWidth: 157
+                        onEditingFinished: {
+                            model.nip = text
+                        }
+                    }
+                    CustomTextField {
+                        id:subcontractorZIP
+                        text : zip
+                        implicitWidth: 137
+                        onEditingFinished: {
+                            model.zip = text
+                        }
+                    }
+                    CustomTextField {
+                        id:subcontractorCity
+                        text : city
+                        implicitWidth: 207
+                        onEditingFinished: {
+                            model.city = text
+                        }
+                    }
+                    CustomTextField {
+                        id:subcontractorStreet
+                        text : street
+                        implicitWidth: 292
+                        onEditingFinished: {
+                            model.street = text
+                        }
+                    }
+                    CustomButton {
+                        id:removeSubcontractor
+                        text: "Delete"
+                        width: 88
+                        height: 50
+                        font.pointSize: 13
+                        font.family: "arial"
+                        colorPressed: "#d9d7d4"
+                        colorMouseOver: "#bfbdbb"
+                        colorDefault: "#b3b2b1"
+                        visible: true
+                        clip: false
+                        onClicked:{
+                            viewService.sessionManager.subcontractorModel.removeSubcontractor(index)
+                        }
+                    }
                 }
-           }
+            }
+        }
     }
     function freezeComponents(freeze)  {
         console.log("subcontractor.freezeComponents!" + !freeze)
-        subcontractor.enabled = !freeze;
+        subcontractorRec.enabled = !freeze;
     }
+
 }

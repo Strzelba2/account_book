@@ -84,6 +84,7 @@ qt_add_qml_module(appROZLICZENIE
     QML_FILES Book.qml
     QML_FILES AddBooks.qml
     QML_FILES SubcontractorList.qml
+    QML_FILES SubcontractorWindow.qml
 )
 
 set_target_properties(appROZLICZENIE PROPERTIES

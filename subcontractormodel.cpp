@@ -9,11 +9,13 @@ SubcontractorModel::SubcontractorModel(DatabaseManager *dbManager, QObject *pare
 
 int SubcontractorModel::rowCount(const QModelIndex &parent) const
 {
+    qDebug() << "SubcontractorModel::rowCount";
     return m_subcontractor.count();
 }
 
 QVariant SubcontractorModel::data(const QModelIndex &index, int role) const
 {
+    qDebug() << "SubcontractorModel::data: " << index.row() << "column:" << index.column() << "role:" << role;
     if (!index.isValid() || index.row() < 0 || index.row() >= m_subcontractor.size()){
         qDebug() << "ivalid index or row:";
         return QVariant();
@@ -49,6 +51,8 @@ QVariant SubcontractorModel::data(const QModelIndex &index, int role) const
 
 bool SubcontractorModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
+    qDebug() << "SubcontractorModel::setData: " << index.row() << "column:" << index.column() << "role:" << role;
+
     Subcontractor* subcontractor = m_subcontractor.at(index.row());
     bool changed = false;
 
@@ -165,6 +169,17 @@ bool SubcontractorModel::loadInitialData()
     return m_dbManager->fetchAllSubcontractor(m_subcontractor);
 }
 
+QString SubcontractorModel::getSubcontractorShortNameById(const int& id) const
+{
+    qDebug() << "SubcontractorModel::getSubcontractorShortNameById";
+    for (const auto& subcontractor : m_subcontractor) {
+            if (subcontractor->id() == id) {
+                return subcontractor->shortname();
+            }
+        }
+        return QString();
+}
+
 void SubcontractorModel::addSubcontractor(const QString &shortname, const QString &name, const QString &nip,
                                           const QString &zip, const QString &city, const QString &street)
 {
@@ -228,6 +243,7 @@ void SubcontractorModel::addSubcontractor(const QString &shortname, const QStrin
 
 void SubcontractorModel::removeSubcontractor(const int& index)
 {
+    qDebug() << "SubcontractorModel::removeSubcontractor";
     if (index < 0 || index >= m_subcontractor.size()){
         emit subcontractorDataError("Incorrect object index.");
         return;
@@ -242,4 +258,16 @@ void SubcontractorModel::removeSubcontractor(const int& index)
         emit subcontractorDataError(m_dbManager->getLastDatabaseError());
     }
 
+}
+
+QVariantMap SubcontractorModel::get(const int &index) const
+{
+    qDebug() << "SubcontractorModel::get";
+    if (index < 0 || index >= m_subcontractor.count())
+           return QVariantMap();
+
+    const auto &subcontractor = m_subcontractor.at(index);
+    return { {"id", subcontractor->id()}, {"shortName", subcontractor->shortname()},
+            {"name", subcontractor->name()},{"nip", subcontractor->nip()},
+            {"zip", subcontractor->zip()},{"city", subcontractor->city()},{"street", subcontractor->street()}};
 }

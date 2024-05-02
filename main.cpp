@@ -6,6 +6,7 @@
 #include "usbuser.hpp"
 #include "totpmanager.hpp"
 #include "loginstate.hpp"
+#include "bookmodel.hpp"
 
 #include <QQmlContext>
 
@@ -24,6 +25,7 @@ int main(int argc, char *argv[])
     ViewService viewService(&session);
 
     qmlRegisterType<LoginState>("com.enum", 1, 0, "LoginState");
+    qmlRegisterType<BookModel>("com.mycompany.bookmodel", 1, 0, "BookModel");
 
     qmlRegisterType<TOTPManager>("MyComponents", 1, 0, "TOTPManager");
 

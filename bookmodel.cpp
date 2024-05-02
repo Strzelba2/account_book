@@ -57,6 +57,15 @@ QVariant BookModel::data(const QModelIndex &index, int role) const
         return index.column();
     }
 
+    if (role == Row) {
+        qDebug() << "index of row:" << index.row();
+        return index.row();
+    }
+
+    if(role == RoleNameRole){
+        return columnToRoleMap.value(index.column(), Qt::UserRole);
+    }
+
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
         role = columnToRoleMap.value(index.column(), Qt::UserRole);
     }
@@ -111,12 +120,29 @@ bool BookModel::setData(const QModelIndex &index, const QVariant &value, int rol
                     emit bookDataError("The value is the same as before");
                 }
                 break;
-            case ContractorRole:
-                if (book->contractor() != value.toString()){
-                    QString columnName = "contractor";
-                    if (m_dbManager->updateBook(book->id(), columnName, value)){
-                        book->setContractor(value.toString());
-                        changed = true;
+            case ContractorRole:{
+                qDebug()<< "contractorRole" << value.toInt();
+                int oldId = book->subcontractorId();
+                if(book->subcontractorId() != value.toInt()){
+                    QString columnNameId = "subcontractors_id";
+                    if (m_dbManager->updateBook(book->id(), columnNameId, value)){
+                        int id = value.toInt();
+                        QString shortName = m_subcontractorModel->getSubcontractorShortNameById(id);
+                        if (book->contractor() != shortName){
+                            QString columnName = "contractor";
+
+                            if (m_dbManager->updateBook(book->id(), columnName, shortName)){
+                                book->setSubcontractorId(id);
+                                book->setContractor(shortName);
+                                changed = true;
+                            }else{
+                                m_dbManager->updateBook(book->id(), columnNameId, oldId);
+                                emit bookDataError(m_dbManager->getLastDatabaseError());
+                            }
+                        }
+                        else{
+                            emit bookDataError("The value is the same as before");
+                        }
                     }else{
                         emit bookDataError(m_dbManager->getLastDatabaseError());
                     }
@@ -125,6 +151,7 @@ bool BookModel::setData(const QModelIndex &index, const QVariant &value, int rol
                     emit bookDataError("The value is the same as before");
                 }
                 break;
+            }
             case InvoiceRole:
                 if (book->invoice() != value.toString()){
                     QString columnName = "invoice";
@@ -276,7 +303,9 @@ QHash<int, QByteArray> BookModel::roleNames() const
     QHash<int, QByteArray> roles;
     roles[Qt::DisplayRole] = "display";
     roles[Qt::EditRole] = "edit";
+    roles[RoleNameRole] = "roleName";
     roles[Column] = "column";
+    roles[Row] = "row";
     roles[IdRole] = "id";
     roles[AccountRole] = "account";
     roles[ContractorRole] = "contractor";
@@ -488,6 +517,13 @@ void BookModel::addNewEmptyBook()
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     m_books.append(newBook);
     endInsertRows();
+}
+
+void BookModel::setSubcontractorModel(SubcontractorModel *subcontractorModel)
+{
+    if (m_subcontractorModel == subcontractorModel)
+        return;
+    m_subcontractorModel = subcontractorModel;
 }
 
 Book *BookModel::findBookWithHighestId()

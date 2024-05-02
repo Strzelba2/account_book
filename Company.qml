@@ -26,8 +26,14 @@ Window {
     property var customButtonClickedFunction: function(popup) {
         console.log("companyWindow.customButtonClickedFunction");
         companyWindow.popupOpen = false;
-        companyWindow.freezeComponents(false)
-        companyLoader.item.freezeComponents(false);
+
+        if(isSubcontractorWindow){
+            subcontractorWindow.freezeComponents(false);
+            subcontractorWindow.freezeWindow = false;
+        }else{
+            companyWindow.freezeComponents(false)
+            companyLoader.item.freezeComponents(false);
+        }
         popup.destroy();
     }
 
@@ -40,9 +46,7 @@ Window {
         companyLoader.source = "BOOK.qml"
         console.log("companyWindow.onCompleted");
     }
-    onClosing: {
-        console.log("companyWindow: onClosing");
-    }
+
     onVisibleChanged: {
         if (!visible) {
             console.log("companyWindow has become invisible");
@@ -308,7 +312,6 @@ Window {
                         visible: true
                         clip: false
                     }
-
                 }
             }
         }
@@ -391,7 +394,6 @@ Window {
 
     function closeAndShowLogin()
     {
-
         console.log("companyWindow.closeAndShowLogin");
         viewService.dbClose();
         if (loginWindowRef) {
@@ -419,7 +421,6 @@ Window {
 
     function showPopup(errorMessage) {
         console.log("companyWindow.showPopup")
-
         if(loginWindow.popupOpen){
             console.log("Popup window is already open.");
             return;
@@ -428,7 +429,7 @@ Window {
 
         if(isSubcontractorWindow){
             subcontractorWindow.freezeComponents(true);
-            companyLoader.item.freezeComponents(true);
+            subcontractorWindow.freezeWindow = true;
         }else{
             companyLoader.item.freezeComponents(true);
         }
@@ -471,8 +472,26 @@ Window {
         }
         function onSubcontractorDataChanged () {
             console.log("viewService.sessionManage.subcontractorModel.onSubcontractorDataChanged")
+
+            if(isSubcontractorWindow){
+                companyLoader.item.changePopupPolice();
+                subcontractorWindow.destroy();
+                isSubcontractorWindow = false;
+                subcontractorWindow = null;
+            }
+
             if(companyLoader.source.toString() === "Subcontractor.qml"){
                 companyLoader.source = "SubcontractorList.qml"
+            }
+        }
+        function onSubcontractorCloseWindow (){
+            console.log("viewService.sessionManage.subcontractorModel.onSubcontractorCloseWindow")
+            if(isSubcontractorWindow){
+                companyLoader.item.changePopupPolice();
+                isSubcontractorWindow = false;
+                subcontractorWindow = null;
+                companyWindow.freezeComponents(false)
+                companyLoader.item.freezeComponents(false);
             }
         }
     }

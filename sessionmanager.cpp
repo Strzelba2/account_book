@@ -171,7 +171,9 @@ void SessionManager::verifyTOTP( int userToken)
         if(!m_bookModel->loadInitialData()){
             m_bookModel->addNewEmptyBook();
         }
-        if(!m_subcontractorModel->loadInitialData()){
+        if(m_subcontractorModel->loadInitialData()){
+            m_bookModel->setSubcontractorModel(m_subcontractorModel);
+        }else{
             emit sessionError("can not open Database");
             return;
         }
